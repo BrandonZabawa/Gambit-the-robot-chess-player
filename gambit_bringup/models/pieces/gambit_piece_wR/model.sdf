@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="gambit_piece_wR">
+    <static>true</static>
+    <link name="link">
+      <inertial>
+        <pose>0 0 0.01313 0 0 0</pose>
+        <mass>0.0142</mass>
+        <inertia><ixx>1e-6</ixx><iyy>1e-6</iyy><izz>1e-6</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+      </inertial>
+      <collision name="collision">
+        <pose>0 0 0.01313 0 0 0</pose>
+        <geometry><cylinder><radius>0.00850</radius><length>0.02625</length></cylinder></geometry>
+        <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
+      </collision>
+      <visual name="v0">
+        <pose>0 0 0.00236 0 0 0</pose>
+        <geometry><cylinder><radius>0.00850</radius><length>0.00473</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v1">
+        <pose>0 0 0.01352 0 0 0</pose>
+        <geometry><cylinder><radius>0.00638</radius><length>0.01759</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v2">
+        <pose>0 0 0.02428 0 0 0</pose>
+        <geometry><cylinder><radius>0.00723</radius><length>0.00394</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

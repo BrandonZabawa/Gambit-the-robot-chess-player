@@ -1,0 +1,22 @@
+# ros_gz_bridge topics between Gazebo and ROS 2.
+# Run:  ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=<path>/gz_bridge.yaml
+# Teleporting pieces uses the set_pose service, which is bridged from the command line:
+#   ros2 run ros_gz_bridge parameter_bridge /world/gambit_chess/set_pose@ros_gz_interfaces/srv/SetEntityPose
+
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/image"
+  gz_topic_name: "/camera/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/camera_info"
+  gz_topic_name: "/camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS

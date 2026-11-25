@@ -193,6 +193,60 @@ Until the Wiki exists, this README is the source of truth.
 
 ---
 
+## Tools and requirements
+- chess set
+- printed ChArUco board & ArUco markers
+- Gazebo
+- ROS2 Lyrical
+- VSCode
+- pytest & Hypothesis
+- Jupyter Notebook
+- Vision
+    - OpenCV
+    - NumPy
+    - SciPy
+- python-chess
+- Deep Learning
+    - PyTorch
+    - torchvision
+- Metrics and plots
+    - scikit-learn metrics
+    - pandas
+    - matplotlib
+- TensorBoard
+- Typer, YAML config files
+- Pyserial (Sevo bus)
+- ROS2
+    - rclpy & cv_bridge
+    - rclcpp
+    - tf2
+    - ros2_control
+    - MoveIt 2
+- ONNX
+- CMake plus Ninja, C++20, colcon + ament_cmake
+- FetchContent
+- Eigen
+- OpenCV C++
+- ONNX Runtime C++
+- GoogleTest
+- spdlog off ROS
+- POSIX serial (termios) -> Servo Bus
+- pybind11
+
+
+## Updated plan (11/4/2026)
+- Gazebo using vanishing pieces to test "Game-logic"
+    - Compare Gambits moves to ground-truth and fix its accuracy
+    - Verify the vanishing moves follows standard chess rules when playing games
+- Order the board, set up the environment, print the ChArUco board and ArUco markers
+- Overhead camera mount, lock focus, real intrinsic calibration
+- Gazebo world, simulated calibration compared against the true intrinsics
+- Pieces in Gazebo, PGN teleport replay script, homography and grid on simulated frames. Cut rule: if the pieces don’t render by November 11, Gazebo stays calibration-only.
+- Capture and auto-labeling tool. Real homography once the board arrives.
+- Real capture sessions under different lighting
+- Baseline classifier, ResNet-18 trained three ways (sim only, real only, mixed) in Colab
+- Board assembly with legality check, end to end. Move detection gate.
+- Evaluation, chesscog comparison, demo video
 ## License
 
 License to be decided. Before choosing, check the license of every dependency (chess engine, chess libraries, LeRobot, arm designs, vendor servo code) and confirm they are compatible with your plans for the project.

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="gambit_piece_wK">
+    <static>true</static>
+    <link name="link">
+      <inertial>
+        <pose>0 0 0.02000 0 0 0</pose>
+        <mass>0.0164</mass>
+        <inertia><ixx>1e-6</ixx><iyy>1e-6</iyy><izz>1e-6</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
+      </inertial>
+      <collision name="collision">
+        <pose>0 0 0.02000 0 0 0</pose>
+        <geometry><cylinder><radius>0.00850</radius><length>0.04000</length></cylinder></geometry>
+        <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
+      </collision>
+      <visual name="v0">
+        <pose>0 0 0.00360 0 0 0</pose>
+        <geometry><cylinder><radius>0.00850</radius><length>0.00720</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v1">
+        <pose>0 0 0.01960 0 0 0</pose>
+        <geometry><cylinder><radius>0.00527</radius><length>0.02480</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v2">
+        <pose>0 0 0.03320 0 0 0</pose>
+        <geometry><cylinder><radius>0.00680</radius><length>0.00240</length></cylinder></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v3">
+        <pose>0 0 0.03560 0.000 0 0</pose>
+        <geometry><box><size>0.00204 0.00204 0.00880</size></box></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+      <visual name="v4">
+        <pose>0 0 0.03600 0.000 0 0</pose>
+        <geometry><box><size>0.00204 0.00646 0.00320</size></box></geometry>
+        <material><ambient>0.930 0.900 0.820 1.000</ambient><diffuse>0.930 0.900 0.820 1.000</diffuse><specular>0.2 0.2 0.2 1</specular></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

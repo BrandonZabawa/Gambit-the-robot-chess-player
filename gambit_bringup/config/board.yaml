@@ -1,0 +1,53 @@
+# Physical layout of the board, pieces, camera and arm. Single source of truth for:
+#   gambit_sim/world_generator.py  (builds the Gazebo world from these numbers)
+#   gambit_sim/teleport.py         (where each square is in the world)
+#   gambit_sim/data_generator.py   (ground-truth labels)
+#   gambit_arm/pick_place.py       (where to reach)
+# On the real board, measure these with a ruler and update them; nothing else changes.
+# Units: meters and radians. World frame: origin at the arm base, x toward the board,
+# y to the arm's left, z up. The table top is z = 0.
+
+board:
+  square: 0.025          # one square's edge (200 mm playing area)
+  center: [0.215, 0.0]   # board center in the world (x, y); all 64 squares reachable here
+  thickness: 0.006
+  border: 0.030          # frame around the squares; ArUco markers sit in its corners
+  white_near_arm: true   # rank 1 is the rank nearest the arm
+  light_rgb: [235, 220, 190]
+  dark_rgb: [120, 85, 60]
+  frame_rgb: [70, 50, 35]
+
+markers:
+  dictionary: DICT_4X4_50
+  size: 0.022            # marker edge
+  # Marker centers sit border/2 outside the nearest playing-area corner on both axes.
+  ids: {a1: 0, h1: 1, h8: 2, a8: 3}
+
+pieces:
+  # Height as a fraction of the square edge; base radius as a fraction of the square edge.
+  height: {P: 0.9, N: 1.15, B: 1.25, R: 1.05, Q: 1.45, K: 1.6}
+  radius: 0.34
+  white_rgba: [0.93, 0.90, 0.82, 1.0]
+  black_rgba: [0.12, 0.10, 0.10, 1.0]
+  static: true           # true: pieces only move by teleport or while attached to the gripper
+                         # false: full physics (try it after the teleport version works)
+  spare_queens: 2        # extra queens per color for promotions
+  graveyard: [0.17, -0.175]   # where captured and unused pieces go (x, y); a row along +x
+
+camera:
+  # Fixed camera on the far side of the board, raised, looking at the board center.
+  position: [0.47, 0.0, 0.40]
+  look_at: [0.215, 0.0, 0.0]
+  width: 640
+  height: 480
+  horizontal_fov: 0.95   # radians
+  rate_hz: 15
+
+arm:
+  base_xyz: [0.0, 0.0, 0.0]
+  park: [-1.6, -1.4, 1.3, 1.2, 0.0]   # shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll
+  hover_height: 0.07                  # gripper height while carrying a piece
+  grasp_height_frac: 0.55             # grasp at this fraction of the piece height
+  gripper_open: 1.0
+  gripper_closed: 0.05
+  max_tilt_deg: 35.0
