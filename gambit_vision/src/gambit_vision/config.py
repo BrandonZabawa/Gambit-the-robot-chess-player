@@ -33,3 +33,22 @@ def load_config(path: str | Path) -> SimpleNamespace:
     """
     with open(path) as f:
         return _to_ns(yaml.safe_load(f) or {})
+
+
+def cfg_get(cfg: Any, dotted: str, default: Any = None) -> Any:
+    """Read an optional setting, e.g. cfg_get(cfg, "cnn.backbone_lr_mult", 0.1).
+
+    Lets new optional keys have a default without editing every YAML file.
+    Works on SimpleNamespace configs and on plain dicts.
+    """
+    obj = cfg
+    for key in dotted.split("."):
+        if isinstance(obj, dict):
+            if key not in obj:
+                return default
+            obj = obj[key]
+        elif hasattr(obj, key):
+            obj = getattr(obj, key)
+        else:
+            return default
+    return default if obj is None else obj

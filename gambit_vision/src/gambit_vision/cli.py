@@ -99,7 +99,11 @@ def chesscog_compare(ours: Path, chesscog: Path, out: Path) -> None:
 # ------------------------------------------------------- M5: move detection
 @app.command("eval-moves")
 def eval_moves(pgn: Path, frames_dir: Path) -> None:
-    """Replay a recorded game and report move-detection accuracy (TODO in move_detection)."""
+    """Replay a recorded game and report move-detection accuracy.
+
+    Needs a frame -> (64, 13) board_proba function (homography warp + crops + CNN);
+    that wiring depends on M1/M2 and is still TODO, so this errors until it exists.
+    """
     from gambit_vision.move_detection import evaluate_on_game
 
     typer.echo(evaluate_on_game(pgn, frames_dir))
