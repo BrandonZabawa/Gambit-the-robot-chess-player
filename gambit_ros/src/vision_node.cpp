@@ -52,38 +52,31 @@ public:
   }
 
 private:
-  void on_image(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
+  void on_image(const sensor_msgs::msg::Image::ConstSharedPtr & /*msg*/)
   {
-    if (++frame_count_ % process_every_n_ != 0) {return;}
-    if (msg->encoding != "rgb8" && msg->encoding != "bgr8") {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "unsupported encoding %s", msg->encoding.c_str());
-      return;
-    }
-    const std::string fen = predict_fen(*msg);
-    if (fen.empty()) {return;}
-
-    // Publish only after `stable_frames_` identical predictions in a row (debounce hands/shadows).
-    stable_count_ = (fen == last_fen_) ? stable_count_ + 1 : 1;
-    last_fen_ = fen;
-    if (stable_count_ == stable_frames_ && fen != published_fen_) {
-      std_msgs::msg::String out;
-      out.data = fen;
-      fen_pub_->publish(out);
-      published_fen_ = fen;
-      RCLCPP_INFO(get_logger(), "board: %s", fen.c_str());
-    }
+    // Design:
+    // - Process only every process_every_n_-th frame (CPU budget); accept rgb8 / bgr8 only
+    //   (throttled warning otherwise).
+    // - fen = predict_fen(); "" means not confident -> skip.
+    // - Debounce: publish only after stable_frames_ identical predictions in a row (hands,
+    //   shadows) and only when it differs from the last published FEN. The publisher is
+    //   transient_local, so a late-starting game_node still gets the latest board.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: on_image");
   }
 
   // Returns the placement FEN, or "" when the board cannot be read confidently.
   std::string predict_fen(const sensor_msgs::msg::Image & /*msg*/)
   {
-    // TODO:
-    //  1. wrap msg data as cv::Mat (CV_8UC3, step = msg.step); convert bgr8 -> rgb8 if needed
-    //  2. detect the 4 ArUco markers (DICT_4X4_50, ids a1=0 h1=1 h8=2 a8=3), homography, warp
-    //  3. cut 64 crops (camera.yaml crop: widen 0.5, extend_up 1.0, 100 x 200) in square order
-    //  4. probs = classifier_->predict_proba(crops)  // (64, 13), classes empty,P,N,B,R,Q,K,p,n,b,r,q,k
-    //  5. argmax per square; if any max prob < min_confidence_ -> return ""
-    //  6. build the placement FEN (rank 8 first), check 1 king per side, return it
+    // Design (mirrors gambit_vision, contracts.md):
+    //  1. wrap msg data as cv::Mat (CV_8UC3, step = msg.step); bgr8 -> rgb8 if needed
+    //  2. detect the 4 ArUco markers (DICT_4X4_50, ids a1=0 h1=1 h8=2 a8=3) -> homography -> warp
+    //  3. cut 64 crops (camera.yaml crop parameters, 100 x 200) in square order a1..h8
+    //  4. classifier_ (gambit_cpp OnnxClassifier) -> (64, 13) probs, classes empty,P,N,B,R,Q,K,p,n,b,r,q,k
+    //  5. any square's max prob < min_confidence_ -> "" (never publish a board it is unsure about)
+    //  6. build the placement FEN (rank 8 first), sanity check one king per side
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: predict_fen");
     return "";
   }
 

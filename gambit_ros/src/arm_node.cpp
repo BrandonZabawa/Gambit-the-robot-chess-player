@@ -45,67 +45,39 @@ public:
   }
 
 private:
-  void on_move(const std::string & uci)
+  void on_move(const std::string & /*uci*/)
   {
-    const auto mv = parse_uci(uci);
-    if (!mv) {
-      RCLCPP_ERROR(get_logger(), "bad move '%s'", uci.c_str());
-      return;
-    }
-    if (busy_) {
-      RCLCPP_WARN(get_logger(), "busy, dropping move %s", uci.c_str());
-      return;
-    }
-    // TODO: build the full pick-and-place waypoint list for mv (see file header) with IK, and
-    // gripper goals on /gripper_controller/follow_joint_trajectory between segments.
-    // For now: go to park, which exercises the action plumbing end to end.
-    std::vector<std::vector<double>> waypoints = {park_};
-    send_trajectory(waypoints);
+    // Design:
+    // - parse_uci the message; malformed -> log an error and ignore it.
+    // - If a trajectory is still running (busy_), drop the move with a warning (or queue it?
+    //   decide: dropping is safer, the game node can resend).
+    // - Build the pick-and-place waypoint list from the file header: capture first (captured
+    //   piece to the graveyard), then hover / descend / grip / lift / move / descend / release /
+    //   lift / park. Square xyz from board.yaml, joint angles from the SO-ARM101 IK (gambit_arm).
+    // - Gripper open/close are separate goals on topics::kGripperAction between arm segments.
+    // - First milestone: send only the park pose, to test the action plumbing end to end.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: on_move");
   }
 
-  void send_trajectory(const std::vector<std::vector<double>> & waypoints)
+  void send_trajectory(const std::vector<std::vector<double>> & /*waypoints*/)
   {
-    if (!arm_client_->wait_for_action_server(std::chrono::seconds(2))) {
-      RCLCPP_ERROR(get_logger(), "arm action server not available");
-      publish_status("error");
-      return;
-    }
-    FollowJT::Goal goal;
-    goal.trajectory.joint_names = joints_;
-    double t = 0.0;
-    for (const auto & q : waypoints) {
-      trajectory_msgs::msg::JointTrajectoryPoint pt;
-      pt.positions = q;
-      t += segment_time_s_;
-      pt.time_from_start = rclcpp::Duration::from_seconds(t);
-      goal.trajectory.points.push_back(pt);
-    }
-
-    rclcpp_action::Client<FollowJT>::SendGoalOptions opts;
-    opts.goal_response_callback = [this](const GoalHandle::SharedPtr & handle) {
-        if (!handle) {
-          RCLCPP_ERROR(get_logger(), "trajectory goal rejected");
-          busy_ = false;
-          publish_status("error");
-        }
-      };
-    opts.result_callback = [this](const GoalHandle::WrappedResult & result) {
-        busy_ = false;
-        const bool ok = result.code == rclcpp_action::ResultCode::SUCCEEDED &&
-          result.result->error_code == FollowJT::Result::SUCCESSFUL;
-        publish_status(ok ? "done" : "error");
-        // TODO: on error, stop and ask the human (never retry blindly next to a person's hand).
-      };
-    busy_ = true;
-    publish_status("moving");
-    arm_client_->async_send_goal(goal, opts);
+    // Design:
+    // - wait_for_action_server with a short timeout; unavailable -> status "error".
+    // - FollowJointTrajectory goal: joint_names = joints_, one JointTrajectoryPoint per waypoint,
+    //   time_from_start accumulating segment_time_s_ per segment (rclcpp::Duration::from_seconds).
+    // - SendGoalOptions: goal_response_callback (null handle = rejected -> error, clear busy_),
+    //   result_callback (SUCCEEDED and error_code == SUCCESSFUL -> "done", else "error"; clear busy_).
+    // - Set busy_ and publish "moving" before async_send_goal.
+    // - On error: stop and ask the human; never retry blindly next to a person's hand.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: send_trajectory");
   }
 
-  void publish_status(const std::string & s)
+  void publish_status(const std::string & /*s*/)
   {
-    std_msgs::msg::String m;
-    m.data = s;
-    status_pub_->publish(m);
+    // Design: wrap the string (idle | moving | done | error) in std_msgs/String and publish on status_pub_.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: publish_status");
   }
 
   std::vector<std::string> joints_;

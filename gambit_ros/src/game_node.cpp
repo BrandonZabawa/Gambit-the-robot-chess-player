@@ -39,45 +39,45 @@ public:
   }
 
 private:
-  void on_board(const std::string & placement)
+  void on_board(const std::string & /*placement*/)
   {
-    if (!placement_from_fen(placement)) {
-      RCLCPP_WARN(get_logger(), "ignoring malformed FEN '%s'", placement.c_str());
-      return;
-    }
-    if (placement == current_placement_) {return;}
-    if (placement == expected_after_robot_) {
-      // The robot's own move has been executed and seen by the camera.
-      current_placement_ = placement;
-      expected_after_robot_.clear();
-      return;
-    }
-    const std::string human_move = infer_move(current_placement_, placement);
-    if (human_move.empty()) {
-      RCLCPP_WARN(get_logger(), "board changed but no single legal move explains it; waiting");
-      return;   // TODO: publish a "please fix the board" status for the UI
-    }
-    current_placement_ = placement;
-    const std::string reply = choose_move();
-    if (reply.empty()) {return;}
-    std_msgs::msg::String out;
-    out.data = reply;
-    move_pub_->publish(out);
-    RCLCPP_INFO(get_logger(), "human %s -> robot %s", human_move.c_str(), reply.c_str());
+    // Design:
+    // - Validate with placement_from_fen; malformed -> warn and ignore.
+    // - Unchanged placement -> nothing to do. Equal to expected_after_robot_ -> the robot's own
+    //   move has been executed and seen: accept it as current and clear the expectation.
+    // - Otherwise infer the human's move (move-detection gate: exactly one legal move explains the
+    //   change). None / ambiguous -> warn, wait, and (later) publish a "please fix the board" status.
+    // - Accepted move -> update the game state, choose_move(), publish the reply UCI on move_pub_.
+    // Why the gate: the vision publishes intermediate boards (hand over the board, half-done
+    // move); only a board that is one legal move away is trusted.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: on_board");
   }
 
-  // TODO: return the UCI move that turns `before` into `after` (legal in the full game state:
-  // side to move, castling rights, en passant), or "" if none / ambiguous. Keep a full move
-  // history (not just placements) so castling and en passant work.
+  // Return the UCI move that turns `before` into `after`, or "" if none / ambiguous.
   std::string infer_move(const std::string & /*before*/, const std::string & /*after*/)
   {
+    // Design:
+    // - Needs the full game state (side to move, castling rights, en passant), so keep a move
+    //   history, not just placements.
+    // - Candidates = all legal moves; apply each and compare the resulting placement with `after`.
+    //   Exactly one match -> that move. Same idea as gambit_game's infer_move (Python).
+    // Decisions for you: port a small C++ chess library, or ask the Python side / engine.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: infer_move");
     return "";
   }
 
-  // TODO: run the engine (UCI: "position startpos moves ...", "go movetime <ms>", read "bestmove"),
-  // with UCI_LimitStrength/UCI_Elo = elo_; set expected_after_robot_ to the placement after the move.
+  // Engine reply as UCI, or "" on failure.
   std::string choose_move()
   {
+    // Design:
+    // - Talk UCI to engine_path_ (popen / boost::process): "uci", setoption UCI_LimitStrength
+    //   true + UCI_Elo elo_, "position startpos moves ...", "go movetime <think_time_s_ in ms>",
+    //   read until "bestmove".
+    // - Set expected_after_robot_ to the placement after that move, so on_board recognizes it.
+    // TODO: implement.
+    RCLCPP_WARN_ONCE(get_logger(), "TODO: choose_move");
     return "";
   }
 
