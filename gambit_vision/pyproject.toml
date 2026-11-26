@@ -1,1 +1,33 @@
-S
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gambit_vision"
+version = "0.1.0"
+description = "Camera-based board state recognition for the Gambit chess robot (CAP5415)."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "opencv-contrib-python",   # contrib build: cv2.aruco
+    "chess",                   # python-chess (PyPI name is now "chess")
+    "pyyaml",
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+    "typer",
+]
+
+[project.optional-dependencies]
+train = ["torch", "torchvision", "tensorboard"]
+dev = ["pytest", "hypothesis"]
+
+[project.scripts]
+gambit-vision = "gambit_vision.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["needs_torch: test requires torch/torchvision"]

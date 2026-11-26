@@ -1,0 +1,35 @@
+# Shared config for M3 (training) and M4 (evaluation). Paths relative to gambit_vision/.
+data:
+  crops_root: data/crops
+  # Split by capture session; never put frames of one session in two splits.
+  train_sessions: []     # e.g. [s01_daylight, s02_lamp]
+  val_sessions: []
+  test_sessions: []      # held-out positions for full-board accuracy
+  external:
+    chessred_root: data/external/chessred      # pretraining / outside reference
+    synthetic_root: data/external/chesscog_synth
+
+baseline:
+  features: [hsv_hist, edge_density, lbp]      # TODO M3: confirm feature set
+  classifier: svm                              # svm | random_forest | logistic
+  targets: [occupancy, color3]
+
+cnn:
+  arch: resnet18
+  pretrained: true
+  num_classes: 13
+  input_size: [200, 100]        # h, w (matches crop size in docs/contracts.md)
+  epochs: 20
+  batch_size: 64
+  lr: 0.001
+  freeze_backbone_epochs: 2
+  augment: {color_jitter: 0.3, rotation_deg: 5, translate: 0.05}
+  pretrain_on: null             # null | chessred | synthetic
+  out_dir: models/resnet18
+
+assembly:
+  low_confidence_threshold: 0.6
+
+eval:
+  run_name: default
+  results_dir: results
