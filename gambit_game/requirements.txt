@@ -1,0 +1,5 @@
+chess>=1.10
+pyyaml
+pandas
+numpy
+# optional: a UCI engine binary (Stockfish), path in gambit_bringup/config/game.yaml

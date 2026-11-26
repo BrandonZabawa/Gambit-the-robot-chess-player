@@ -1,0 +1,53 @@
+# Game, engine and teaching settings. Read by gambit_game/notebooks/* and gambit_teach/notebooks/*.
+# Values marked (proposed) are placeholders to confirm with measurements (see README milestones).
+
+engine:
+  path: stockfish            # UCI binary name or absolute path; resolved with shutil.which
+  default_elo: 1700          # README Teaching milestone: rating-targeted play around 1700
+  min_elo: 1320              # Stockfish's lowest UCI_Elo; below this use skill_level
+  max_elo: 2850
+  skill_level: null          # 0..20 Stockfish "Skill Level"; null = use UCI_Elo instead
+  threads: 1
+  hash_mb: 64
+  think_time_s: 0.5          # robot think time per move
+  analysis_time_s: 0.2       # per-position time when analysing the human's moves
+  analysis_depth: null       # if set, overrides analysis_time_s
+  multipv: 5                 # candidate moves offered to the teacher policy
+
+teaching:
+  # Centipawn-loss thresholds for classifying the human's moves (lichess-like, proposed).
+  cpl_thresholds:
+    inaccuracy: 50
+    mistake: 100
+    blunder: 300
+  mate_score_cp: 10000       # cp value used for forced mate when computing CPL
+  cpl_cap: 1000              # cap per-move CPL so one blunder does not dominate the average
+  phase:
+    opening_max_fullmove: 10
+    endgame_max_material: 13 # non-pawn, non-king material (N=B=3, R=5, Q=9) for both sides <= this
+  confidence:
+    min_games: 5             # fewer analysed games -> model confidence is low (proposed)
+    min_moves: 150
+    min_confidence: 0.6      # below this the teacher falls back to solid play
+    max_ood_score: 3.0       # above this (z-score-like) the player "departs from history"
+  closeness_band_cp: 150     # keep the eval after the robot's move within +-band of 0 (proposed)
+  max_eval_drop_cp: 120      # teacher may give up at most this vs the best move (proposed)
+  narrow_decisive_cp: 200    # a decisive game counts as narrow if |eval| stayed under this until late
+  balanced_target: 0.95      # README aspiration: 95..99 percent balanced outcomes
+
+game:
+  human_color: white
+  human_move_timeout_s: 600  # how long to wait for a human move before prompting
+  stable_frames: 5           # board must be identical for this many frames before reading a move
+  min_square_confidence: 0.8 # per-square vision confidence below this -> uncertain
+  max_ambiguous_candidates: 1
+
+recovery:
+  max_arm_retries: 2         # automatic verify-and-retry attempts per primitive (README: retry)
+  max_verify_attempts: 3     # re-read the board this many times before asking the human
+  ask_human_on_uncertain: true
+
+logging:
+  dir: logs/games            # relative to the repo root
+  pgn: true
+  jsonl: true

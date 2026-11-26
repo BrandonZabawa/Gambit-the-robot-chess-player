@@ -1,0 +1,2 @@
+# gambit_teach notebooks reuse gambit_game/notebooks/engine.ipynb
+-r ../gambit_game/requirements.txt
