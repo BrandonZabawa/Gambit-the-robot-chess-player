@@ -1,11 +1,15 @@
+# Dependency list for the gambit_vision notebooks (no installable package: all code lives in
+# notebooks/, reused with %run). Install with:
+#   pip install ".[dev]"            # notebooks + self-checks (tools/run_notebooks.sh)
+#   pip install ".[train,dev]"      # plus torch for training (or use Colab, run_train_cnn.ipynb)
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "gambit_vision"
-version = "0.1.0"
-description = "Camera-based board state recognition for the Gambit chess robot (CAP5415)."
+version = "0.2.0"
+description = "Camera-based board state recognition for the Gambit chess robot (CAP5415), as notebooks."
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
@@ -15,19 +19,12 @@ dependencies = [
     "pandas",
     "scikit-learn",
     "matplotlib",
-    "typer",
 ]
 
 [project.optional-dependencies]
 train = ["torch", "torchvision", "tensorboard"]
-dev = ["pytest", "hypothesis"]
+dev = ["jupyter", "ipykernel", "nbclient", "nbformat"]
+yolo = ["ultralytics"]         # optional alternative detector (notebooks/yolo.ipynb)
 
-[project.scripts]
-gambit-vision = "gambit_vision.cli:app"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = ["needs_torch: test requires torch/torchvision"]
+[tool.setuptools]
+packages = []                  # dependencies only, nothing to install

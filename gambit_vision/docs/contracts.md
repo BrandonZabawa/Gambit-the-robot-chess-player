@@ -1,13 +1,13 @@
 # Gambit Vision data contracts
 
 The stages talk to each other only through the formats below. If you change one, update
-this file and every reader in the same commit. Paths are relative to `gambit_vision/`.
+this file and every reader in the same commit. Paths are relative to `gambit_vision/`; code lives in `notebooks/`.
 
 ## Labels and squares
-Defined in `src/gambit_vision/labels.py`. 13 classes in the fixed order
+Defined in `notebooks/labels.ipynb`. 13 classes in the fixed order
 `empty, P, N, B, R, Q, K, p, n, b, r, q, k`. Squares use python-chess indexing (a1 = 0 ... h8 = 63).
 
-## Square crops (written by M2 capture.py, read by M3 dataset.py)
+## Square crops (written by M2 capture.ipynb, read by M3 dataset.ipynb)
 
 ```
 data/crops/<session_id>/
@@ -35,7 +35,20 @@ Splits are always by `session_id`, never by frame.
 Crop geometry: a square plus a margin above it (pieces are tall and lean in perspective).
 Default: crop is the square widened by 50% on each side and extended 100% upward in the
 warped image, resized to 100 x 200 (w x h). M2 owns these numbers; record them in
-`configs/camera.yaml` under `crop:`.
+`configs/camera.yaml` under `crop:`. Implemented in `notebooks/capture.ipynb: crop_box,
+extract_crop`. "Upward" assumes the warp has the camera side at the bottom
+(`camera.yaml: warp.view: black_bottom`, camera on the black side), so pieces lean up.
+Note: the default region is 2 x 2 squares squeezed into 100 x 200; revisit before large captures.
+
+## Warp and grid (M1, `notebooks/homography.ipynb`)
+Top-down image of `8 * square_px + 2 * margin_px` pixels (`camera.yaml: warp`). With
+`view: black_bottom` rank 8 is at the bottom and the a-file on the right. Square `sq` occupies
+the cell `square_cell_warp(sq)`. Marker positions come from `gambit_bringup/config/board.yaml`
+(centers `border / 2` outside the playing-area corners on both axes).
+
+## Camera intrinsics (M1, `notebooks/calibration.ipynb`)
+`calibration/camera_intrinsics.yaml`: `image_size [w, h]`, `camera_matrix` (3x3 list),
+`dist_coeffs` (list), `rms_reprojection_error_px`, `per_view_errors_px`, `n_views`, `date`.
 
 ## Model output (M3 -> M4)
 Any square classifier exposes
@@ -47,7 +60,7 @@ predict_proba(crops: np.ndarray | list[np.ndarray]) -> np.ndarray  # shape (N, 1
 For a whole board, N = 64 in square-index order, so M4 receives a (64, 13) array.
 
 ## Board prediction (M4 -> M5, and to the robot)
-`board_assembly.assemble(probs) -> BoardPrediction` with at least:
+`notebooks/board_assembly.ipynb: assemble(probs) -> BoardPrediction` with at least:
 `fen` (piece placement), `labels` (64 str), `confidence` (64 float), `low_confidence`
 (list of square names), `legal` (bool), `issues` (list of str).
 

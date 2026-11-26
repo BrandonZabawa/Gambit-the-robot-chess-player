@@ -1,0 +1,24 @@
+# OPTIONAL alternative piece detector (gambit_vision/notebooks/yolo.ipynb).
+# Ultralytics dataset file. `path` is relative to the directory you start training from;
+# run from the repo root, or replace it with an absolute path (e.g. on Colab).
+# Labels are written by yolo.ipynb (write_yolo_sample) from M2 capture sessions:
+#   <path>/images/{train,val}/<frame>.png  and  <path>/labels/{train,val}/<frame>.txt
+path: gambit_vision/data/yolo
+train: images/train
+val: images/val
+
+# 12 piece classes = gambit_vision labels.CLASSES without "empty", same order
+# (YOLO class i == CLASSES[i + 1]).
+names:
+  0: P
+  1: N
+  2: B
+  3: R
+  4: Q
+  5: K
+  6: p
+  7: n
+  8: b
+  9: r
+  10: q
+  11: k
