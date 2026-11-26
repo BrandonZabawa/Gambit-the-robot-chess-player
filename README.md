@@ -252,6 +252,11 @@ Until the Wiki exists, this README is the source of truth.
 All Python is in Jupyter notebooks (see [docs/notebooks.md](docs/notebooks.md)); C/C++, CMake,
 YAML, SDF and the ROS launch file are normal files. Start with each package's `00_overview.ipynb`.
 
+The code is a **design skeleton**: every function has its signature, a docstring and `# Design:`
+notes on the approach, and raises `NotImplementedError` until it is written. Each notebook ends with
+a self-check *plan* (the tests to write). Fully implemented reference versions live in git history
+(commit `d2c4463`) and, for vision M3-M5, on branch `claude/optimistic-davinci-nl1jed`.
+
 | Folder | Deliverables |
 |---|---|
 | `gambit_vision/notebooks/` | CAP5415 M1-M5: calibration, homography + grid, capture/auto-labeling, baseline, ResNet-18, board assembly, evaluation, chesscog comparison, move detection; plus placement verification and camera-vs-engine board sync |
