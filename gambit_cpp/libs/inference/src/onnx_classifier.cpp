@@ -21,44 +21,39 @@ struct OnnxClassifier::Impl {
 bool OnnxClassifier::available() { return false; }
 #endif
 
+// Construction only allocates the pimpl (layout, not logic); destructor / moves are defaulted.
 OnnxClassifier::OnnxClassifier() : impl_(std::make_unique<Impl>()) {}
 OnnxClassifier::~OnnxClassifier() = default;
 OnnxClassifier::OnnxClassifier(OnnxClassifier&&) noexcept = default;
 OnnxClassifier& OnnxClassifier::operator=(OnnxClassifier&&) noexcept = default;
 
-void OnnxClassifier::load(const std::string& model_path) {
-#ifdef GAMBIT_WITH_ONNX
-  Ort::SessionOptions opts;
-  opts.SetIntraOpNumThreads(1);
-  // TODO: choose execution provider (CUDA/TensorRT on Jetson Orin), graph optimization level.
-  impl_->session = std::make_unique<Ort::Session>(impl_->env, model_path.c_str(), opts);
-#else
-  (void)model_path;
-  throw std::runtime_error("built without ONNX Runtime (configure with -DGAMBIT_WITH_ONNX=ON)");
-#endif
+void OnnxClassifier::load(const std::string& /*model_path*/) {
+  // Design:
+  // - With ONNX Runtime: Ort::SessionOptions (SetIntraOpNumThreads, graph optimisation
+  //   level; execution provider CUDA / TensorRT on the Jetson Orin), then
+  //   impl_->session = std::make_unique<Ort::Session>(env, path, opts). Ort throws
+  //   Ort::Exception on a bad file; let it propagate.
+  // - Without: throw std::runtime_error telling the user to configure -DGAMBIT_WITH_ONNX=ON
+  //   (tests check this behaviour).
+  throw std::logic_error("TODO: OnnxClassifier::load");
 }
 
 bool OnnxClassifier::loaded() const {
-#ifdef GAMBIT_WITH_ONNX
-  return impl_->session != nullptr;
-#else
-  return impl_->loaded;
-#endif
+  // Design: session != nullptr (ONNX build) / impl_->loaded flag (stub build).
+  throw std::logic_error("TODO: OnnxClassifier::loaded");
 }
 
-Scores OnnxClassifier::run(const CropBatch& crops) {
-  const std::size_t expected =
-      kNumSquares * static_cast<std::size_t>(crops.channels * crops.height * crops.width);
-  if (crops.data.size() != expected || expected == 0)
-    throw std::invalid_argument("CropBatch.data must hold 64 * C * H * W floats");
-#ifdef GAMBIT_WITH_ONNX
-  if (!impl_->session) throw std::logic_error("model not loaded");
-  // TODO: build the input tensor (shape {64, C, H, W}), look up input/output names from the
-  // session, call session->Run, check the output shape is {64, 13} and copy it into Scores.
-  throw std::logic_error("OnnxClassifier::run: TODO");
-#else
-  throw std::runtime_error("built without ONNX Runtime (configure with -DGAMBIT_WITH_ONNX=ON)");
-#endif
+Scores OnnxClassifier::run(const CropBatch& /*crops*/) {
+  // Design:
+  // - Validate first: data.size() must equal 64 * C * H * W and be nonzero, else
+  //   std::invalid_argument (cheap check that catches most integration bugs).
+  // - ONNX build: logic_error if not loaded; Ort::Value::CreateTensor over crops.data with
+  //   shape {64, C, H, W} (no copy); input / output names from the session; session->Run;
+  //   check the output shape is {64, 13}; copy rows into Scores.
+  // - Stub build: std::runtime_error as in load().
+  // Preprocessing (resize, normalisation) must match gambit_vision training exactly; it is
+  // the caller's job, documented on CropBatch.
+  throw std::logic_error("TODO: OnnxClassifier::run");
 }
 
 }  // namespace gambit::inference

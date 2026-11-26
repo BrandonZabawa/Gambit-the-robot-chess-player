@@ -1,53 +1,41 @@
+// Square <-> world conversions. Design notes per function; implementations are TODO.
+// Must agree with square_map.ipynb (tests/test_square_map.cpp uses the same numbers).
 #include "gambit/square_map/square_map.hpp"
 
 #include <cmath>
+#include <stdexcept>
 
 namespace gambit::square_map {
 
 inline constexpr double kGraveyardSpacingFrac = 0.9;  // of the square edge
 
-std::optional<std::array<int, 2>> parse_square(std::string_view name) {
-  if (name.size() != 2) return std::nullopt;
-  const int file = name[0] - 'a';
-  const int rank = name[1] - '1';
-  if (file < 0 || file > 7 || rank < 0 || rank > 7) return std::nullopt;
-  return std::array<int, 2>{file, rank};
+std::optional<std::array<int, 2>> parse_square(std::string_view /*name*/) {
+  // Design: exactly 2 chars; file = name[0] - 'a', rank = name[1] - '1'; both must be in
+  // 0..7, else std::nullopt (no exceptions: bad input from IPC is expected, not a bug).
+  throw std::logic_error("TODO: parse_square");
 }
 
-std::string square_name(int file, int rank) {
-  return {static_cast<char>('a' + file), static_cast<char>('1' + rank)};
+std::string square_name(int /*file*/, int /*rank*/) {
+  // Design: two chars, 'a' + file and '1' + rank.
+  throw std::logic_error("TODO: square_name");
 }
 
-std::optional<Point3> square_to_world(std::string_view name, const BoardParams& b) {
-  auto fr = parse_square(name);
-  if (!fr) return std::nullopt;
-  int f = (*fr)[0], r = (*fr)[1];
-  if (!b.white_near_arm) {  // board rotated 180 degrees
-    f = 7 - f;
-    r = 7 - r;
-  }
-  return Point3{b.center_x + (r - 3.5) * b.square, b.center_y + (3.5 - f) * b.square,
-                b.thickness};
+std::optional<Point3> square_to_world(std::string_view /*name*/, const BoardParams& /*b*/) {
+  // Design: parse_square (nullopt passes through); flip both indices (7 - i) if
+  // !white_near_arm; apply the header formula; z = board thickness.
+  throw std::logic_error("TODO: square_to_world");
 }
 
-std::optional<std::string> world_to_square(double x, double y, const BoardParams& b) {
-  const double r_f = (x - b.center_x) / b.square + 3.5;
-  const double f_f = 3.5 - (y - b.center_y) / b.square;
-  // Inside the playing area means within half a square of the outer square centers.
-  if (r_f < -0.5 || r_f >= 7.5 || f_f < -0.5 || f_f >= 7.5) return std::nullopt;
-  int r = static_cast<int>(std::lround(r_f));
-  int f = static_cast<int>(std::lround(f_f));
-  r = r < 0 ? 0 : (r > 7 ? 7 : r);
-  f = f < 0 ? 0 : (f > 7 ? 7 : f);
-  if (!b.white_near_arm) {
-    f = 7 - f;
-    r = 7 - r;
-  }
-  return square_name(f, r);
+std::optional<std::string> world_to_square(double /*x*/, double /*y*/,
+                                           const BoardParams& /*b*/) {
+  // Design: invert the formula to continuous (rank, file); reject outside [-0.5, 7.5)
+  // BEFORE rounding; std::lround, clamp to 0..7, undo the white_near_arm flip, square_name.
+  throw std::logic_error("TODO: world_to_square");
 }
 
-Point3 graveyard_slot(int index, const BoardParams& b) {
-  return {b.graveyard_x + index * kGraveyardSpacingFrac * b.square, b.graveyard_y, 0.0};
+Point3 graveyard_slot(int /*index*/, const BoardParams& /*b*/) {
+  // Design: (graveyard_x + index * kGraveyardSpacingFrac * square, graveyard_y, 0.0).
+  throw std::logic_error("TODO: graveyard_slot");
 }
 
 }  // namespace gambit::square_map

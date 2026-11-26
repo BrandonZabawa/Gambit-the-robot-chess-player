@@ -40,7 +40,7 @@ typedef struct {
   uint8_t payload[HL_MAX_PAYLOAD];
 } hl_frame_t;
 
-/* Implemented: CRC and encoding (pure functions). */
+/* CRC and encoding (pure functions, TODO bodies; testable on the host). */
 uint16_t hl_crc16(const uint8_t *data, size_t len);
 size_t hl_encode(const hl_frame_t *f, uint8_t *out, size_t out_cap);
 

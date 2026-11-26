@@ -1,3 +1,6 @@
+// POSIX serial port for the Waveshare Bus Servo Adapter. Design notes per function;
+// implementations are TODO. Key APIs: open(2), termios (tcgetattr / cfmakeraw / cfsetispeed /
+// cfsetospeed / tcsetattr / tcflush / tcdrain), poll(2), read(2) / write(2).
 #include "gambit/servo_bus/serial_port.hpp"
 
 #include <fcntl.h>
@@ -13,112 +16,84 @@
 namespace gambit::servo {
 namespace {
 
-speed_t to_speed(int baud) {
-  switch (baud) {
-    case 9600: return B9600;
-    case 57600: return B57600;
-    case 115200: return B115200;
-    case 500000: return B500000;
-    case 1000000: return B1000000;
-    // TODO: non-standard rates (e.g. 128000) need termios2 / BOTHER on Linux, or IOSSIOSPEED
-    // on macOS. The STS3215 factory default is 1 Mbaud, so start there.
-    default: throw std::invalid_argument("unsupported baud rate");
-  }
+[[maybe_unused]] speed_t to_speed(int /*baud*/) {
+  // Design:
+  // - Map the integer baud to the termios constant (B9600 .. B1000000) with a switch;
+  //   anything else -> std::invalid_argument.
+  // - Non-standard rates (e.g. 128000) need termios2 / BOTHER on Linux or IOSSIOSPEED on
+  //   macOS; not needed while the servos run at the 1 Mbaud factory default.
+  throw std::logic_error("TODO: to_speed");
 }
 
-[[noreturn]] void throw_errno(const char* what) {
-  throw std::system_error(errno, std::generic_category(), what);
+[[maybe_unused]] [[noreturn]] void throw_errno(const char* /*what*/) {
+  // Design: throw std::system_error(errno, std::generic_category(), what) so callers get the
+  // OS error text ("Permission denied" -> add yourself to the dialout group).
+  throw std::logic_error("TODO: throw_errno");
 }
 
 }  // namespace
 
-SerialPort::~SerialPort() { close(); }
+SerialPort::~SerialPort() {
+  // TODO: close() the descriptor (RAII). Destructors must not throw, so close() must not
+  // throw either.
+}
 
-SerialPort::SerialPort(SerialPort&& other) noexcept : fd_(std::exchange(other.fd_, -1)) {}
+SerialPort::SerialPort(SerialPort&& /*other*/) noexcept {
+  // TODO: take other's fd_ and leave other with -1 (std::exchange), so only one object
+  // ever closes the descriptor. noexcept: must not throw.
+}
 
-SerialPort& SerialPort::operator=(SerialPort&& other) noexcept {
-  if (this != &other) {
-    close();
-    fd_ = std::exchange(other.fd_, -1);
-  }
+SerialPort& SerialPort::operator=(SerialPort&& /*other*/) noexcept {
+  // TODO: guard self-assignment, close() our own fd, then take other's (std::exchange).
+  // noexcept: must not throw.
   return *this;
 }
 
-void SerialPort::open(const std::string& device, int baud) {
-  close();
-  fd_ = ::open(device.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
-  if (fd_ < 0) throw_errno("open serial port");
-
-  termios tio{};
-  if (tcgetattr(fd_, &tio) != 0) throw_errno("tcgetattr");
-  cfmakeraw(&tio);                       // no echo, no canonical mode, 8 data bits
-  tio.c_cflag |= (CLOCAL | CREAD);
-  tio.c_cflag &= ~(PARENB | CSTOPB);     // no parity, 1 stop bit
-  tio.c_cflag &= ~CRTSCTS;               // no hardware flow control
-  tio.c_iflag &= ~(IXON | IXOFF | IXANY);
-  tio.c_cc[VMIN] = 0;                    // reads are driven by poll() below
-  tio.c_cc[VTIME] = 0;
-  const speed_t s = to_speed(baud);
-  cfsetispeed(&tio, s);
-  cfsetospeed(&tio, s);
-  if (tcsetattr(fd_, TCSANOW, &tio) != 0) throw_errno("tcsetattr");
-  tcflush(fd_, TCIOFLUSH);
-  // TODO: set ASYNC_LOW_LATENCY via TIOCSSERIAL (FTDI/CH340 latency timer) and measure the
-  // round-trip time of a PING; the default 16 ms USB latency dominates the control loop.
+void SerialPort::open(const std::string& /*device*/, int /*baud*/) {
+  // Design:
+  // - close() first so open() can be called again; ::open with O_RDWR | O_NOCTTY | O_NONBLOCK
+  //   (no controlling terminal; non-blocking so poll() controls timing).
+  // - tcgetattr, then cfmakeraw (no echo, no line discipline, 8 data bits), CLOCAL | CREAD,
+  //   no parity, 1 stop bit, no RTS/CTS, no XON/XOFF; VMIN = VTIME = 0 because reads are
+  //   driven by poll().
+  // - cfsetispeed / cfsetospeed with to_speed(baud), tcsetattr(TCSANOW), tcflush(TCIOFLUSH).
+  // - Every failing syscall -> throw_errno with the call's name.
+  // Later: ASYNC_LOW_LATENCY via TIOCSSERIAL (USB-serial latency timer, default ~16 ms,
+  // dominates the round trip); measure a PING round trip before and after.
+  throw std::logic_error("TODO: SerialPort::open");
 }
 
 void SerialPort::close() {
-  if (fd_ >= 0) {
-    ::close(fd_);
-    fd_ = -1;
-  }
+  // Design: if fd_ >= 0, ::close it and set fd_ = -1. Must not throw (called from the
+  // destructor), so ignore / log close errors.
+  // TODO: implement
 }
 
-std::size_t SerialPort::write(std::span<const std::uint8_t> data) {
-  if (fd_ < 0) throw std::logic_error("serial port not open");
-  std::size_t done = 0;
-  while (done < data.size()) {
-    const ssize_t n = ::write(fd_, data.data() + done, data.size() - done);
-    if (n < 0) {
-      if (errno == EAGAIN || errno == EINTR) continue;
-      throw_errno("write serial port");
-    }
-    done += static_cast<std::size_t>(n);
-  }
-  tcdrain(fd_);
-  return done;
+std::size_t SerialPort::write(std::span<const std::uint8_t> /*data*/) {
+  // Design:
+  // - std::logic_error if not open.
+  // - Loop ::write until every byte is out (partial writes happen on non-blocking fds);
+  //   retry on EAGAIN / EINTR, throw_errno otherwise.
+  // - tcdrain so the bytes have actually left before we start waiting for the reply
+  //   (matters on half duplex: the servo answers ~immediately).
+  throw std::logic_error("TODO: SerialPort::write");
 }
 
-std::vector<std::uint8_t> SerialPort::read(std::size_t max_bytes,
-                                           std::chrono::milliseconds timeout) {
-  if (fd_ < 0) throw std::logic_error("serial port not open");
-  std::vector<std::uint8_t> out;
-  out.reserve(max_bytes);
-  pollfd pfd{fd_, POLLIN, 0};
-  // TODO: use one overall deadline instead of a per-chunk timeout, and stop as soon as a full
-  // status packet (length byte known) has arrived.
-  while (out.size() < max_bytes) {
-    const int r = ::poll(&pfd, 1, static_cast<int>(timeout.count()));
-    if (r < 0) {
-      if (errno == EINTR) continue;
-      throw_errno("poll serial port");
-    }
-    if (r == 0) break;  // timeout
-    std::uint8_t buf[256];
-    const std::size_t want = std::min(sizeof(buf), max_bytes - out.size());
-    const ssize_t n = ::read(fd_, buf, want);
-    if (n < 0) {
-      if (errno == EAGAIN || errno == EINTR) continue;
-      throw_errno("read serial port");
-    }
-    if (n == 0) break;
-    out.insert(out.end(), buf, buf + n);
-  }
-  return out;
+std::vector<std::uint8_t> SerialPort::read(std::size_t /*max_bytes*/,
+                                           std::chrono::milliseconds /*timeout*/) {
+  // Design:
+  // - std::logic_error if not open.
+  // - Loop: poll(POLLIN, timeout); 0 = timeout -> return what we have; then ::read into a
+  //   stack buffer and append, until max_bytes. Retry on EINTR / EAGAIN.
+  // - Decision for you: per-chunk timeout (simple) vs one overall deadline
+  //   (std::chrono::steady_clock, better for a fixed-rate loop), and stopping as soon as a
+  //   full status packet (LEN byte known) has arrived.
+  throw std::logic_error("TODO: SerialPort::read");
 }
 
 void SerialPort::flush_input() {
-  if (fd_ >= 0) tcflush(fd_, TCIFLUSH);
+  // Design: tcflush(fd_, TCIFLUSH) if open; drops stale replies and our own echo.
+  throw std::logic_error("TODO: SerialPort::flush_input");
 }
 
 }  // namespace gambit::servo

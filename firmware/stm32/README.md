@@ -7,8 +7,11 @@ Development order: get the arm working from the laptop first (Python, then `gamb
 move the bus here and measure both paths on the same task (see
 `gambit_arm/notebooks/00_overview.ipynb`, "Python vs C++ path").
 
-Status: **skeleton**. Packet encoding/checksums (servo bus and host link CRC) are implemented
-and match the Python and C++ code; everything that touches hardware is a `TODO`.
+Status: **skeleton**. Headers, constants, the limit defaults and the main-loop layout are in
+place; every function body in `Core/Src/{servo_bus,host_link,limits}.c` is a design note plus a
+`TODO` returning a neutral value (0 / false / `LIM_OK`). Start with the pure packet helpers
+(`sb_checksum`, `sb_encode`, `sb_decode_status`, `hl_crc16`, `hl_encode`): they must match the
+Python and C++ code byte for byte and can be tested on the host.
 
 ## Role
 
@@ -51,6 +54,7 @@ gcc -std=c11 -Wall -Wextra -Ifirmware/stm32/Core/Inc firmware/stm32/Core/Src/*.c
 
 ## TODO
 
+- [ ] pure helpers (servo packets, CRC-16, frame encode) + a host test against the shared vectors
 - [ ] choose and order the board; CubeMX project
 - [ ] `servo_bus.c` hardware functions (half-duplex direction switching, timeouts, SYNC_READ)
 - [ ] `limits.c` checks; regenerate tick limits after calibration

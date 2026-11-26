@@ -1,6 +1,6 @@
 # Host <-> STM32 protocol
 
-Transport: USB CDC or UART (921600 8N1). Same framing either way. Implemented in
+Transport: USB CDC or UART (921600 8N1). Same framing either way. To be implemented in
 `Core/Src/host_link.c` (MCU side); the host side belongs in `gambit_cpp` (TODO).
 
 ## Frame

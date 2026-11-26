@@ -1,3 +1,6 @@
+// STS3215 packet encode/decode. Design notes per function; implementations are TODO.
+// Must produce byte-for-byte the same packets as gambit_arm/notebooks/servo_bus.ipynb and
+// firmware/stm32/Core/Src/servo_bus.c (tests/test_sts_protocol.cpp holds the shared vectors).
 #include "gambit/servo_bus/sts_protocol.hpp"
 
 #include <algorithm>
@@ -7,72 +10,73 @@
 
 namespace gambit::servo {
 
-std::uint8_t checksum(std::span<const std::uint8_t> body) {
-  unsigned sum = 0;
-  for (auto b : body) sum += b;
-  return static_cast<std::uint8_t>(~sum & 0xFF);
+std::uint8_t checksum(std::span<const std::uint8_t> /*body*/) {
+  // Design:
+  // - Sum every byte of the body (ID .. last param) in an unsigned accumulator wider than
+  //   8 bits, then take the bitwise NOT and keep the low 8 bits.
+  // - Wider accumulator + final mask is the whole trick: the sum overflows 8 bits for any
+  //   real packet (see ChecksumWrapsAt8Bits).
+  throw std::logic_error("TODO: checksum");
 }
 
-std::vector<std::uint8_t> encode(std::uint8_t id, Instruction instr,
-                                 std::span<const std::uint8_t> params) {
-  if (params.size() > 250) throw std::invalid_argument("too many params for one packet");
-  std::vector<std::uint8_t> pkt{kHeader, kHeader, id,
-                                static_cast<std::uint8_t>(params.size() + 2),
-                                static_cast<std::uint8_t>(instr)};
-  pkt.insert(pkt.end(), params.begin(), params.end());
-  pkt.push_back(checksum(std::span(pkt).subspan(2)));
-  return pkt;
+std::vector<std::uint8_t> encode(std::uint8_t /*id*/, Instruction /*instr*/,
+                                 std::span<const std::uint8_t> /*params*/) {
+  // Design:
+  // - Layout: 0xFF 0xFF ID LEN INSTR params... CHK with LEN = params.size() + 2.
+  // - LEN is one byte: reject oversized params with std::invalid_argument.
+  // - Build into one std::vector (reserve the final size), then append checksum() of the
+  //   span starting after the two header bytes (std::span::subspan).
+  throw std::logic_error("TODO: encode");
 }
 
-std::vector<std::uint8_t> ping(std::uint8_t id) { return encode(id, Instruction::Ping); }
-
-std::vector<std::uint8_t> read(std::uint8_t id, std::uint8_t address, std::uint8_t length) {
-  const std::uint8_t p[2] = {address, length};
-  return encode(id, Instruction::Read, p);
+std::vector<std::uint8_t> ping(std::uint8_t /*id*/) {
+  // Design: encode with Instruction::Ping and no params.
+  throw std::logic_error("TODO: ping");
 }
 
-std::vector<std::uint8_t> write(std::uint8_t id, std::uint8_t address,
-                                std::span<const std::uint8_t> data) {
-  std::vector<std::uint8_t> p{address};
-  p.insert(p.end(), data.begin(), data.end());
-  return encode(id, Instruction::Write, p);
+std::vector<std::uint8_t> read(std::uint8_t /*id*/, std::uint8_t /*address*/,
+                               std::uint8_t /*length*/) {
+  // Design: encode with Instruction::Read, params = {address, length}.
+  throw std::logic_error("TODO: read");
 }
 
-std::vector<std::uint8_t> sync_write(std::uint8_t address, std::uint8_t data_length,
-                                     std::span<const SyncEntry> entries) {
-  std::vector<std::uint8_t> p{address, data_length};
-  for (const auto& e : entries) {
-    if (e.data.size() != data_length) throw std::invalid_argument("sync_write: data length");
-    p.push_back(e.id);
-    p.insert(p.end(), e.data.begin(), e.data.end());
-  }
-  return encode(kBroadcastId, Instruction::SyncWrite, p);
+std::vector<std::uint8_t> write(std::uint8_t /*id*/, std::uint8_t /*address*/,
+                                std::span<const std::uint8_t> /*data*/) {
+  // Design: encode with Instruction::Write, params = address followed by the data bytes.
+  throw std::logic_error("TODO: write");
 }
 
-std::optional<StatusPacket> decode_status(std::span<const std::uint8_t> bytes) {
-  std::size_t i = 0;
-  while (i + 1 < bytes.size() && !(bytes[i] == kHeader && bytes[i + 1] == kHeader)) ++i;
-  // Need header(2) + id + len + err + chk at minimum.
-  if (i + 6 > bytes.size()) return std::nullopt;
-  const std::uint8_t len = bytes[i + 3];
-  if (len < 2 || i + 4 + len > bytes.size()) return std::nullopt;
-  auto body = bytes.subspan(i + 2, len + 1);  // id, len, err, params
-  const std::uint8_t chk = bytes[i + 3 + len];
-  if (checksum(body) != chk) return std::nullopt;
-  StatusPacket s;
-  s.id = bytes[i + 2];
-  s.error = bytes[i + 4];
-  s.params.assign(bytes.begin() + i + 5, bytes.begin() + i + 3 + len);
-  return s;
+std::vector<std::uint8_t> sync_write(std::uint8_t /*address*/, std::uint8_t /*data_length*/,
+                                     std::span<const SyncEntry> /*entries*/) {
+  // Design:
+  // - Params = {address, data_length}, then per entry: id followed by its data bytes.
+  // - Every entry must have data.size() == data_length, else std::invalid_argument (a short
+  //   entry would shift every following servo's bytes - silent, dangerous).
+  // - Sent to kBroadcastId with Instruction::SyncWrite; servos do not reply.
+  throw std::logic_error("TODO: sync_write");
 }
 
-double ticks_to_rad(int ticks) {
-  return (ticks - kCenterTick) * 2.0 * std::numbers::pi / kTicksPerRev;
+std::optional<StatusPacket> decode_status(std::span<const std::uint8_t> /*bytes*/) {
+  // Design:
+  // - Scan for the first 0xFF 0xFF pair; bytes before it are noise / half-duplex echo.
+  // - Need at least 6 bytes from the header (FF FF ID LEN ERR CHK) to read LEN; then the
+  //   packet is 4 + LEN bytes. Too short -> std::nullopt (caller reads more and retries).
+  // - Verify checksum() over ID..last param against the final byte; mismatch -> nullopt.
+  // - Fill StatusPacket: id, error byte, params = the LEN - 2 bytes between ERR and CHK.
+  // Index arithmetic with span::subspan keeps it bounds-safe; test the off-by-ones against
+  // the notebook's decode_status.
+  throw std::logic_error("TODO: decode_status");
 }
 
-int rad_to_ticks(double rad) {
-  const int t = kCenterTick + static_cast<int>(std::lround(rad * kTicksPerRev / (2.0 * std::numbers::pi)));
-  return std::clamp(t, 0, kTicksPerRev - 1);
+double ticks_to_rad(int /*ticks*/) {
+  // Design: (ticks - kCenterTick) * 2*pi / kTicksPerRev, using std::numbers::pi.
+  throw std::logic_error("TODO: ticks_to_rad");
+}
+
+int rad_to_ticks(double /*rad*/) {
+  // Design: inverse of ticks_to_rad rounded with std::lround, then std::clamp to
+  // 0..kTicksPerRev-1 (the register cannot hold anything else).
+  throw std::logic_error("TODO: rad_to_ticks");
 }
 
 }  // namespace gambit::servo

@@ -19,23 +19,31 @@ void limits_init_defaults(limits_t *lim) {
 
 uint32_t limits_check_command(const limits_t *lim, const uint16_t prev[SB_NUM_SERVOS],
                               const uint16_t cmd[SB_NUM_SERVOS]) {
-  /* TODO: for each joint: range check against min/max_ticks (LIM_JOINT_RANGE) and
-   * |cmd - prev| <= max_step_ticks (LIM_STEP). Keep it branch-light; runs every cycle. */
+  /* Design: for each joint: cmd outside [min_ticks, max_ticks] -> LIM_JOINT_RANGE;
+   * |cmd - prev| > max_step_ticks -> LIM_STEP (compute the difference in a signed int).
+   * OR the bits together; never modify the command (reject, do not "fix"). Runs every cycle,
+   * so keep it simple and branch-light.
+   * TODO: implement (returning LIM_OK until then means NO limits are enforced) */
   (void)lim; (void)prev; (void)cmd;
   return LIM_OK;
 }
 
 uint32_t limits_check_state(const limits_t *lim, const sb_state_t *st, uint32_t now_ms) {
-  /* TODO: missing_mask -> LIM_SERVO_MISSING; temperature -> LIM_OVERTEMP; current above
-   * max_current_ma continuously for overcurrent_hold_ms (static per-joint timestamps) ->
-   * LIM_OVERCURRENT. */
+  /* Design: missing_mask != 0 -> LIM_SERVO_MISSING; any temperature > max_temperature_c ->
+   * LIM_OVERTEMP; |current| > max_current_ma continuously for overcurrent_hold_ms ->
+   * LIM_OVERCURRENT (static per-joint "over since" timestamps, cleared when the current
+   * drops; short grasp spikes must not trip). Same logic as EStop.update_telemetry in
+   * safety.ipynb. Use unsigned subtraction for now_ms differences (wraps correctly).
+   * TODO: implement */
   (void)lim; (void)st; (void)now_ms;
   return LIM_OK;
 }
 
 bool limits_tighten(limits_t *lim, const limits_t *requested) {
-  /* TODO: accept only if requested ranges are inside the current ones and all scalar limits
-   * are <= current; copy and return true, else return false (reply NACK). */
+  /* Design: accept only if every requested range lies inside the current one and every
+   * scalar limit is <= the current one (the host may tighten, never loosen); then copy and
+   * return true, else leave *lim unchanged and return false (caller replies NACK).
+   * TODO: implement */
   (void)lim; (void)requested;
   return false;
 }

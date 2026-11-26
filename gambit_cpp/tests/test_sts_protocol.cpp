@@ -1,3 +1,5 @@
+// Test outlines for the STS protocol. Same vectors as servo_bus.ipynb's self-check plan and
+// the STM32 firmware. Replace each GTEST_SKIP with the assertions described.
 #include <gtest/gtest.h>
 
 #include "gambit/servo_bus/sts_protocol.hpp"
@@ -5,66 +7,49 @@
 using namespace gambit::servo;
 
 TEST(StsProtocol, ChecksumOfPing) {
-  // PING id 1: FF FF 01 02 01 CHK, CHK = ~(1 + 2 + 1) = 0xFB
-  const std::vector<std::uint8_t> expected{0xFF, 0xFF, 0x01, 0x02, 0x01, 0xFB};
-  EXPECT_EQ(ping(1), expected);
+  // Assert: ping(1) == {FF FF 01 02 01 FB}  (CHK = ~(1 + 2 + 1) = 0xFB).
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, ChecksumWrapsAt8Bits) {
-  const std::uint8_t body[] = {0xFE, 0xFF, 0x10};
-  EXPECT_EQ(checksum(body), static_cast<std::uint8_t>(~(0xFE + 0xFF + 0x10) & 0xFF));
+  // Assert: checksum({0xFE, 0xFF, 0x10}) == ~(0xFE + 0xFF + 0x10) & 0xFF (sum > 255).
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, ReadPresentPosition) {
-  const auto pkt = read(3, reg::kPresentPosition, 2);
-  ASSERT_EQ(pkt.size(), 8u);
-  EXPECT_EQ(pkt[3], 4);  // LEN = 2 params + 2
-  EXPECT_EQ(pkt[4], static_cast<std::uint8_t>(Instruction::Read));
-  EXPECT_EQ(pkt[5], reg::kPresentPosition);
-  EXPECT_EQ(pkt.back(), static_cast<std::uint8_t>(~(3 + 4 + 2 + 0x38 + 2) & 0xFF));
+  // Assert on read(3, reg::kPresentPosition, 2): size 8, LEN byte == 4, instruction byte ==
+  // Read, address byte == kPresentPosition, last byte == ~(3 + 4 + 2 + 0x38 + 2) & 0xFF.
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, WriteGoalPositionIsLittleEndian) {
-  const auto pkt = write(1, reg::kGoalPosition, u16_le(2048));
-  // FF FF 01 05 03 2A 00 08 CHK
-  ASSERT_EQ(pkt.size(), 9u);
-  EXPECT_EQ(pkt[6], 0x00);
-  EXPECT_EQ(pkt[7], 0x08);
+  // Assert on write(1, reg::kGoalPosition, u16_le(2048)): size 9, bytes 6 and 7 are 00 08
+  // (low byte first).
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, StatusRoundTrip) {
-  // Build a fake status reply: id 1, no error, present position 0x0800 (LE: 00 08).
-  std::vector<std::uint8_t> reply{0xFF, 0xFF, 0x01, 0x04, 0x00, 0x00, 0x08};
-  reply.push_back(checksum(std::span(reply).subspan(2)));
-  std::vector<std::uint8_t> noisy{0x12, 0x34};  // garbage before the header is skipped
-  noisy.insert(noisy.end(), reply.begin(), reply.end());
-  const auto s = decode_status(noisy);
-  ASSERT_TRUE(s.has_value());
-  EXPECT_EQ(s->id, 1);
-  EXPECT_EQ(s->error, 0);
-  ASSERT_EQ(s->params.size(), 2u);
-  EXPECT_EQ(from_u16_le(s->params[0], s->params[1]), 2048);
+  // Build a status reply {FF FF 01 04 00 00 08 CHK} (CHK via checksum over bytes 2..),
+  // prefix two garbage bytes; assert decode_status finds it: id 1, error 0, 2 params that
+  // decode (from_u16_le) to 2048.
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, BadChecksumRejected) {
-  std::vector<std::uint8_t> reply{0xFF, 0xFF, 0x01, 0x02, 0x00, 0x00};
-  EXPECT_FALSE(decode_status(reply).has_value());
-  std::vector<std::uint8_t> short_reply{0xFF, 0xFF, 0x01};
-  EXPECT_FALSE(decode_status(short_reply).has_value());
+  // Assert: decode_status returns nullopt for {FF FF 01 02 00 00} (wrong CHK) and for a
+  // truncated {FF FF 01}.
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, SyncWriteLayout) {
-  std::vector<SyncEntry> e{{1, u16_le(1000)}, {2, u16_le(3000)}};
-  const auto pkt = sync_write(reg::kGoalPosition, 2, e);
-  // header(2) id len instr addr dlen + 2*(1+2) + chk
-  ASSERT_EQ(pkt.size(), 2u + 3u + 2u + 6u + 1u);
-  EXPECT_EQ(pkt[2], kBroadcastId);
-  EXPECT_EQ(pkt[3], 2 + 6 + 2);
+  // sync_write(kGoalPosition, 2, {{1, u16_le(1000)}, {2, u16_le(3000)}}): assert size 14,
+  // id byte == kBroadcastId, LEN == 2 + 6 + 2; an entry with the wrong data length throws
+  // std::invalid_argument.
+  GTEST_SKIP() << "TODO";
 }
 
 TEST(StsProtocol, TicksRadiansRoundTrip) {
-  EXPECT_DOUBLE_EQ(ticks_to_rad(2048), 0.0);
-  EXPECT_NEAR(ticks_to_rad(3072), 3.14159265 / 2, 1e-6);
-  for (int t : {0, 100, 2048, 4000, 4095}) EXPECT_EQ(rad_to_ticks(ticks_to_rad(t)), t);
-  EXPECT_EQ(rad_to_ticks(100.0), 4095);  // clamped
+  // Assert: ticks_to_rad(2048) == 0, ticks_to_rad(3072) == pi/2; rad_to_ticks(ticks_to_rad(t))
+  // == t for t in {0, 100, 2048, 4000, 4095}; rad_to_ticks(100.0) == 4095 (clamped).
+  GTEST_SKIP() << "TODO";
 }

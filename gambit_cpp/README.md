@@ -7,13 +7,13 @@ notebooks' self-checks use.
 
 | Target | What | Status |
 |---|---|---|
-| `gambit_servo_bus` | STS3215 packet encode/decode + checksum (`sts_protocol`), POSIX termios port (`serial_port`) | protocol done; port open/configure/read/write basic, latency tuning TODO |
-| `gambit_kinematics` | SO-101 FK from the URDF joint origins (Eigen), numeric Jacobian | FK done; IK TODO (port `ik_dls` from kinematics.ipynb) |
-| `gambit_square_map` | square <-> world from board.yaml numbers, graveyard slots | done; YAML loading TODO |
-| `gambit_inference` | `OnnxClassifier`: 64 crops -> (64, 13) scores | interface + stub; ONNX Runtime calls TODO |
-| `gambit_arm_daemon` | owns the servo bus, spdlog logging, `--dry-run` | skeleton; IPC + control loop TODO |
-| `gambit_cpp_py` | pybind11 module (optional) | a few functions bound |
-| `gambit_tests` | GoogleTest: checksum, packet round trip, square map, FK | passing |
+| `gambit_servo_bus` | STS3215 packet encode/decode + checksum (`sts_protocol`), POSIX termios port (`serial_port`) | headers done; every .cpp body is a design note + `throw std::logic_error("TODO")` |
+| `gambit_kinematics` | SO-101 FK from the URDF joint origins (Eigen), numeric Jacobian, DLS IK | joint table filled in; FK, Jacobian, IK TODO |
+| `gambit_square_map` | square <-> world from board.yaml numbers, graveyard slots | TODO; YAML loading TODO |
+| `gambit_inference` | `OnnxClassifier`: 64 crops -> (64, 13) scores | interface; load/run TODO |
+| `gambit_arm_daemon` | owns the servo bus, spdlog logging, `--dry-run` | argument parsing only; startup check, IPC, control loop TODO (design steps in `main()`) |
+| `gambit_cpp_py` | pybind11 module (optional) | a few functions bound (they raise until implemented) |
+| `gambit_tests` | GoogleTest: checksum, packet round trip, square map, FK | test outlines: each test describes its assertions and calls `GTEST_SKIP()` |
 
 ## Build
 
@@ -60,6 +60,10 @@ tests/
 
 ## TODO
 
+- [ ] implement every `TODO` body in `libs/*/src` (design notes are in each function), then
+      turn each `GTEST_SKIP()` test outline into real assertions
+- [ ] port the protocol first (`sts_protocol.cpp`): its vectors are shared with the notebook
+      and the STM32 firmware
 - [ ] IK (`so101.cpp inverse`) and its round-trip test
 - [ ] YAML config (board.yaml, safety.yaml) loading, e.g. yaml-cpp via FetchContent
 - [ ] daemon: status-packet reads, limit checks from safety.yaml, 100 Hz loop, IPC with the

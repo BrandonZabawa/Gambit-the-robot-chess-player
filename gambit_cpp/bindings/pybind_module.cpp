@@ -1,5 +1,7 @@
 // Python bindings (built only with -DGAMBIT_BUILD_PYTHON=ON). Lets the notebooks compare the
 // Python and C++ paths:   import gambit_cpp_py as g;  g.ping_packet(1); g.forward([0]*5)
+// The bindings are only declarations over the library API: until the .cpp bodies are written
+// every call raises RuntimeError("TODO: <function>") (pybind11 translates std::logic_error).
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

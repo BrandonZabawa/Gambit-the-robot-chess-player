@@ -45,37 +45,33 @@ typedef struct {
 static app_t app;
 
 static void app_estop(uint32_t faults) {
-  app.estop_latched = true;
-  app.faults |= faults;
-  /* TODO: hold position: write last measured positions as goals; or sb_set_torque(false).
-   * Send HL_RSP_FAULT to the host. */
+  /* Design: latch (estop_latched = true, OR the faults in), then make the arm safe: hold the
+   * last measured positions as goals (estop.on_trip: hold) or sb_set_torque(false); send one
+   * HL_RSP_FAULT to the host. Only CLEAR_ESTOP unlatches.
+   * TODO: implement */
+  (void)faults;
 }
 
 void app_handle_command(const hl_frame_t *f) {
-  /* TODO: switch (f->type) over hl_type_t: PING -> ACK; HEARTBEAT -> update
+  /* Design: switch (f->type) over hl_type_t: PING -> ACK; HEARTBEAT -> update
    * last_heartbeat_ms; SET_JOINT_TARGETS -> unpack 6 x u16 LE into app.target, set
-   * target_pending (reject with NACK while e-stopped); SET_TORQUE; GET_STATE -> send state;
+   * target_pending (NACK while e-stopped); SET_TORQUE; GET_STATE -> send state;
    * SET_LIMITS -> limits_tighten(); ESTOP -> app_estop(0); CLEAR_ESTOP -> clear only if
-   * limits_check_state() is clean; GET_VERSION. Every command resets the heartbeat timer. */
+   * limits_check_state() is clean; GET_VERSION. Every command resets the heartbeat timer.
+   * Check f->len against the expected payload size before unpacking.
+   * TODO: implement */
   (void)f;
 }
 
 static void control_step(uint32_t now) {
-  hl_poll();
-  if (sb_read_state(&app.state)) {
-    const uint32_t f = limits_check_state(&app.limits, &app.state, now);
-    if (f) app_estop(f);
-  }
-  if (now - app.last_heartbeat_ms > app.limits.heartbeat_timeout_ms) app_estop(LIM_HEARTBEAT);
-  if (!app.estop_latched && app.target_pending) {
-    const uint32_t f = limits_check_command(&app.limits, app.last_cmd, app.target);
-    if (f) {
-      app_estop(f);   /* TODO: or NACK and keep holding, depending on the fault */
-    } else if (sb_write_goal_positions(app.target)) {
-      memcpy(app.last_cmd, app.target, sizeof app.last_cmd);
-    }
-    app.target_pending = false;
-  }
+  /* Design: one 10 ms cycle, steps 1-4 of the header comment: hl_poll; sb_read_state ->
+   * limits_check_state (fault -> app_estop); heartbeat older than heartbeat_timeout_ms ->
+   * app_estop(LIM_HEARTBEAT); if not e-stopped and a target is pending: limits_check_command
+   * against last_cmd, then sb_write_goal_positions and remember it as last_cmd. Decide which
+   * faults latch the e-stop and which only NACK the command.
+   * TODO: implement */
+  (void)now;
+  (void)app_estop;  /* referenced so the skeleton builds warning-free; remove when used */
 }
 
 int main(void) {

@@ -36,7 +36,8 @@ typedef struct {
   uint32_t missing_mask;              /* bit i set: servo id i+1 did not answer */
 } sb_state_t;
 
-/* Pure packet helpers (implemented, no hardware). Return the packet length or 0 on error. */
+/* Pure packet helpers (no hardware; TODO bodies, testable on the host). Return the packet
+ * length or 0 on error. */
 uint8_t sb_checksum(const uint8_t *body, size_t len);
 size_t sb_encode(uint8_t id, uint8_t instr, const uint8_t *params, size_t nparams,
                  uint8_t *out, size_t out_cap);

@@ -9,89 +9,83 @@
 /* ------------------------------------------------------------------ pure helpers */
 
 uint8_t sb_checksum(const uint8_t *body, size_t len) {
-  unsigned sum = 0;
-  for (size_t i = 0; i < len; ++i) sum += body[i];
-  return (uint8_t)(~sum & 0xFFu);
+  /* Design: sum the body bytes (ID .. last param) in an unsigned int (wider than 8 bits),
+   * bitwise NOT, keep the low byte. Same as checksum() in the notebook and gambit_cpp.
+   * TODO: implement */
+  (void)body; (void)len;
+  return 0;
 }
 
 size_t sb_encode(uint8_t id, uint8_t instr, const uint8_t *params, size_t nparams,
                  uint8_t *out, size_t out_cap) {
-  const size_t total = nparams + 6u;
-  if (total > out_cap || nparams > 250u) return 0;
-  out[0] = 0xFF;
-  out[1] = 0xFF;
-  out[2] = id;
-  out[3] = (uint8_t)(nparams + 2u);
-  out[4] = instr;
-  if (nparams) memcpy(&out[5], params, nparams);
-  out[total - 1u] = sb_checksum(&out[2], nparams + 3u);
-  return total;
+  /* Design: FF FF ID LEN INSTR params CHK with LEN = nparams + 2 and total = nparams + 6.
+   * No malloc on the MCU: the caller owns `out`; return 0 if it does not fit (or LEN would
+   * overflow a byte) so callers can test the length. Checksum over out[2] .. last param.
+   * TODO: implement */
+  (void)id; (void)instr; (void)params; (void)nparams; (void)out; (void)out_cap;
+  return 0;
 }
 
 size_t sb_encode_sync_write_u16(uint8_t addr, const uint8_t *ids, const uint16_t *values,
                                 size_t n, uint8_t *out, size_t out_cap) {
-  uint8_t params[2 + 3 * SB_NUM_SERVOS];
-  if (n > SB_NUM_SERVOS) return 0;
-  params[0] = addr;
-  params[1] = 2;  /* data length per servo */
-  for (size_t i = 0; i < n; ++i) {
-    params[2 + 3 * i] = ids[i];
-    params[3 + 3 * i] = (uint8_t)(values[i] & 0xFFu);  /* STS: little-endian */
-    params[4 + 3 * i] = (uint8_t)(values[i] >> 8);
-  }
-  return sb_encode(SB_BROADCAST_ID, SB_INST_SYNC_WRITE, params, 2 + 3 * n, out, out_cap);
+  /* Design: params = addr, data length 2, then per servo: id, value low byte, value high
+   * byte (STS is little-endian). Build them in a stack buffer sized for SB_NUM_SERVOS, reject
+   * n > SB_NUM_SERVOS, then sb_encode to SB_BROADCAST_ID with SB_INST_SYNC_WRITE.
+   * TODO: implement */
+  (void)addr; (void)ids; (void)values; (void)n; (void)out; (void)out_cap;
+  return 0;
 }
 
 bool sb_decode_status(const uint8_t *buf, size_t len, uint8_t *id, uint8_t *error,
                       uint8_t *params, size_t *nparams) {
-  size_t i = 0;
-  while (i + 1 < len && !(buf[i] == 0xFF && buf[i + 1] == 0xFF)) ++i;
-  if (i + 6 > len) return false;
-  const uint8_t plen = buf[i + 3];
-  if (plen < 2 || i + 4u + plen > len) return false;
-  if (sb_checksum(&buf[i + 2], plen + 1u) != buf[i + 3 + plen]) return false;
-  *id = buf[i + 2];
-  *error = buf[i + 4];
-  *nparams = plen - 2u;
-  if (*nparams) memcpy(params, &buf[i + 5], *nparams);
-  return true;
+  /* Design: skip to the first FF FF; need 6 bytes to read LEN, then 4 + LEN bytes in total;
+   * verify the checksum; fill id, error and the LEN - 2 params. Return false (outputs
+   * untouched) on short input or a bad checksum. Mirror decode_status in the notebook and
+   * check the same vectors (gambit_cpp/tests/test_sts_protocol.cpp).
+   * TODO: implement */
+  (void)buf; (void)len; (void)id; (void)error; (void)params; (void)nparams;
+  return false;
 }
 
 /* ------------------------------------------------------------------ hardware (TODO) */
 
 void sb_init(void) {
-  /* TODO: CubeMX: USARTx in Single Wire (Half-Duplex) mode, 1 000 000 baud 8N1, TX pin open
+  /* Design: CubeMX: USARTx in Single Wire (Half-Duplex) mode, 1 000 000 baud 8N1, TX pin open
    * drain with pull-up (or the Waveshare-style direction buffer); DMA for TX and RX; enable
-   * the IDLE-line interrupt to detect end of a status packet. */
+   * the IDLE-line interrupt to detect the end of a status packet.
+   * TODO: implement */
 }
 
 bool sb_ping(uint8_t id) {
-  /* TODO: encode PING, HAL_HalfDuplex_EnableTransmitter + HAL_UART_Transmit, then
-   * HAL_HalfDuplex_EnableReceiver and wait (<= 2 ms) for a status packet from `id`. */
+  /* Design: sb_encode a PING, HAL_HalfDuplex_EnableTransmitter + HAL_UART_Transmit, then
+   * HAL_HalfDuplex_EnableReceiver and wait (<= 2 ms) for a status packet from `id`
+   * (sb_decode_status). Returns true only on a valid reply from that id.
+   * TODO: implement */
   (void)id;
   return false;
 }
 
 bool sb_write_goal_positions(const uint16_t goal_ticks[SB_NUM_SERVOS]) {
-  static const uint8_t ids[SB_NUM_SERVOS] = {1, 2, 3, 4, 5, 6};
-  uint8_t pkt[SB_MAX_PACKET];
-  const size_t n = sb_encode_sync_write_u16(SB_REG_GOAL_POSITION, ids, goal_ticks,
-                                            SB_NUM_SERVOS, pkt, sizeof pkt);
-  if (n == 0) return false;
-  /* TODO: transmit pkt (DMA), no reply expected for broadcast. Callers must have run
-   * limits_check_command() first. */
+  /* Design: one sb_encode_sync_write_u16 to SB_REG_GOAL_POSITION for ids 1..6 into a stack
+   * buffer of SB_MAX_PACKET, transmit (DMA), no reply for broadcast. Callers must have run
+   * limits_check_command() first: this function does not check limits.
+   * TODO: implement */
+  (void)goal_ticks;
   return false;
 }
 
 bool sb_set_torque(bool enable) {
-  /* TODO: broadcast WRITE SB_REG_TORQUE_ENABLE = enable. */
+  /* Design: broadcast WRITE of SB_REG_TORQUE_ENABLE = enable (no reply).
+   * TODO: implement */
   (void)enable;
   return false;
 }
 
 bool sb_read_state(sb_state_t *state) {
-  /* TODO: SYNC_READ (or six READs) of present position / current / temperature; set
-   * missing_mask for servos that time out. Budget: whole read < 2 ms at 1 Mbaud. */
+  /* Design: SYNC_READ (or six READs to start) of present position / current / temperature;
+   * set the missing_mask bit for servos that time out. Budget: the whole read < 2 ms at
+   * 1 Mbaud, or it eats the 10 ms control cycle.
+   * TODO: implement */
   (void)state;
   return false;
 }
