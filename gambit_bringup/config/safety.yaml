@@ -1,0 +1,61 @@
+# Arm safety limits. Read by gambit_arm/notebooks/safety.ipynb (Python path), and to be mirrored
+# by gambit_cpp (gambit_arm_daemon) and firmware/stm32/Core/Src/limits.c (real-time path).
+# Units: meters, radians, rad/s, milliamps, seconds. World frame as in board.yaml
+# (origin at the arm base, x toward the board, y to the arm's left, z up, table top z = 0).
+#
+# Every number here is a STARTING VALUE. "measure/verify" means: check it on the real arm
+# (or against the STS3215 datasheet) before trusting it, and tighten rather than loosen.
+
+joints:
+  # Position limits copied from gambit_description/urdf/so101.urdf.xacro <limit lower/upper>,
+  # shrunk by `joint_margin` below at runtime. measure/verify: the real arm after calibration
+  # may hit its own frame before these (especially elbow_flex and wrist_flex).
+  shoulder_pan:  {lower: -1.91986, upper: 1.91986, servo_id: 1}
+  shoulder_lift: {lower: -1.74533, upper: 1.74533, servo_id: 2}
+  elbow_flex:    {lower: -1.69,    upper: 1.69,    servo_id: 3}
+  wrist_flex:    {lower: -1.65806, upper: 1.65806, servo_id: 4}
+  wrist_roll:    {lower: -2.74385, upper: 2.84121, servo_id: 5}
+  gripper:       {lower: -0.174533, upper: 1.74533, servo_id: 6}
+
+joint_margin: 0.05            # rad kept away from each URDF limit. measure/verify
+
+velocity:
+  # STS3215 no-load speed is roughly 0.2 s / 60 deg (~5 rad/s) at 7.4 V; we run far slower so a
+  # bad command cannot knock pieces over. measure/verify on the arm with a piece in the gripper.
+  max_joint_rad_s: 1.5        # per joint, applied to every arm joint
+  max_gripper_rad_s: 2.0
+  max_tool_m_s: 0.15          # Cartesian speed of the gripper tip while carrying a piece
+  max_step_rad: 0.2           # largest allowed jump between consecutive commanded points
+
+torque:
+  # STS3215 Torque Limit register (0x30, 0..1000 = 0.1 % of max torque) and current. verify
+  # the register address and scaling against the datasheet before writing it.
+  max_torque_permille: 600    # arm joints. measure/verify
+  max_current_ma: 1500        # trip level for Present Current (0x45) on any arm joint. measure/verify
+  overcurrent_hold_s: 0.3     # current must stay above the limit this long before tripping
+  max_temperature_c: 60       # Present Temperature (0x3F). verify the servo's own cutoff
+
+gripper:
+  # Force limit for grasping chess pieces: weak enough not to crush or flip a piece, strong
+  # enough to hold a weighted king while moving. measure/verify with each piece type.
+  max_torque_permille: 300
+  grasp_current_ma: [80, 600] # expected Present Current range while holding a piece (grasp_verify)
+  closed_empty_threshold: 0.10  # rad; gripper closing below this means nothing was grasped. measure
+
+workspace:
+  # Axis-aligned box the gripper tip (tool frame) must stay inside. Covers the board
+  # (x 0.1275..0.3025, y -0.0875..0.0875 square centers, plus the 30 mm frame) and the graveyard
+  # row at y = -0.175. measure/verify after mounting arm and board on one plate.
+  x: [0.05, 0.40]
+  y: [-0.22, 0.20]
+  z: [0.005, 0.30]            # z min: tool tip never below 5 mm above the table
+  min_board_clearance: 0.004  # m above the board top (z = board.thickness) except while grasping
+  max_tilt_deg: 35.0          # approach tilt from vertical; same as board.yaml arm.max_tilt_deg
+
+estop:
+  # Software e-stop. The hardware e-stop (a switch cutting servo power) is separate and wins.
+  heartbeat_timeout_s: 0.5    # host -> controller heartbeat; missing it triggers the e-stop
+  on_trip: hold               # hold = keep torque at current position; limp = torque off
+                              # (limp drops the arm onto the board; prefer hold unless overheating)
+  require_manual_reset: true  # e-stop latches until clear_estop() / CLEAR_ESTOP command
+  trip_on: [overcurrent, overtemperature, joint_limit, workspace, heartbeat_lost, servo_missing]

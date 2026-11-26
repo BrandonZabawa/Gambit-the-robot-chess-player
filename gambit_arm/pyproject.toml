@@ -1,0 +1,30 @@
+# Dependency list for the gambit_arm notebooks (no installable package: all code lives in
+# notebooks/, reused with %run). The C++ path is gambit_cpp/, the firmware firmware/stm32/.
+#   pip install ".[dev]"             # library notebooks + self-checks (tools/run_notebooks.sh)
+#   pip install ".[hardware,dev]"    # plus pyserial for the real servo bus
+#   pip install ".[lerobot,dev]"     # plus LeRobot for teleop / imitation learning
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gambit_arm"
+version = "0.2.0"
+description = "SO-ARM101 servo bus, kinematics, safety and pick-and-place for the Gambit chess robot, as notebooks."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pyyaml",
+    "chess",          # python-chess: chess move -> motion sequence (pick_place.ipynb)
+    "pandas",         # run notebooks: trial logs
+    "matplotlib",     # run notebooks: plots
+]
+
+[project.optional-dependencies]
+hardware = ["pyserial"]
+lerobot = ["lerobot[feetech]"]
+dev = ["jupyter", "ipykernel", "nbclient", "nbformat"]
+
+[tool.setuptools]
+packages = []         # dependencies only, nothing to install
