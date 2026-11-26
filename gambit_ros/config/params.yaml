@@ -1,0 +1,35 @@
+# Parameters for the gambit_ros nodes. Load with:
+#   ros2 run gambit_ros vision_node --ros-args --params-file $(ros2 pkg prefix gambit_ros)/share/gambit_ros/config/params.yaml
+# (gambit.launch.py passes this file when start_nodes:=true.)
+
+vision_node:
+  ros__parameters:
+    use_sim_time: true
+    image_topic: /camera/image
+    board_fen_topic: /gambit/board_fen
+    model_path: models/square_classifier.onnx     # exported ResNet-18 (gambit_vision M3)
+    camera_config: gambit_vision/configs/camera.yaml   # warp + crop geometry
+    min_confidence: 0.6       # squares below this go to low_confidence; the FEN is not published
+    process_every_n: 5        # classify every n-th frame (15 Hz camera)
+    stable_frames: 3          # publish only after n identical consecutive predictions
+
+game_node:
+  ros__parameters:
+    use_sim_time: true
+    board_fen_topic: /gambit/board_fen
+    robot_move_topic: /gambit/robot_move
+    robot_color: black        # side the robot plays
+    engine_path: stockfish
+    think_time_s: 0.5
+    elo: 1700                 # gambit_bringup/config/game.yaml engine.default_elo
+
+arm_node:
+  ros__parameters:
+    use_sim_time: true
+    robot_move_topic: /gambit/robot_move
+    arm_action: /arm_controller/follow_joint_trajectory
+    gripper_action: /gripper_controller/follow_joint_trajectory
+    joints: [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll]
+    park: [-1.6, -1.4, 1.3, 1.2, 0.0]       # board.yaml arm.park
+    segment_time_s: 2.0
+    board_config: gambit_bringup/config/board.yaml

@@ -1,0 +1,59 @@
+# Simulated dataset generation (gambit_sim/notebooks/data_generator.ipynb, run_generate_dataset.ipynb).
+# Replays games in Gazebo with teleported pieces, randomizes lighting and camera pose per session,
+# grabs /camera/image after each ply and writes square crops + manifest.csv in the format of
+# gambit_vision/docs/contracts.md. Paths are relative to the repo root.
+
+world: gambit_chess
+board_config: gambit_bringup/config/board.yaml
+camera_model: gambit_bringup/models/board_camera/model.sdf
+
+games:
+  source: data/games/sim_games.pgn   # multi-game PGN (e.g. a lichess export); TODO: add the file
+  max_games: 200                     # games to replay in total (across sessions)
+  max_plies: 80                      # stop each game after this many plies
+  every_nth_ply: 1                   # capture every n-th ply (1 = every position)
+  random_positions: 0                # extra random legal positions per session (optional)
+  seed: 0
+
+sessions:
+  count: 10                          # one session = one lighting setup + one camera placement
+  games_per_session: 20
+  name_format: "sim_{index:02d}_{lighting}"   # session_id; always starts with sim_ so splits can
+                                              # separate sim from real (s01_daylight, ...)
+  splits: {train: 0.7, val: 0.15, test: 0.15}  # by session, never by frame
+
+capture:
+  frames_per_ply: 2                  # frames per position (each with fresh small jitter)
+  settle_s: 0.2                      # wait after the last set_pose before grabbing a frame
+  image_topic: /camera/image
+  camera_info_topic: /camera/camera_info
+  save_full_frames: true             # also write frames/<frame_id>.png (warped board)
+
+lighting:
+  # Sampled once per session (sun) and lightly per frame (ambient).
+  presets: [daylight, warm_lamp, dim, overhead]   # tags used in the session name
+  sun_intensity: [0.5, 1.2]          # multiplier on the world's diffuse 0.85
+  sun_direction_jitter_deg: 25       # rotate the default direction (-0.3, -0.2, -1.0) by up to this
+  sun_color_temp_k: [3000, 6500]     # converted to RGB
+  ambient: [0.35, 0.8]               # scene ambient grey level
+  shadows: [true, false]
+  per_frame_ambient_jitter: 0.05
+
+camera_jitter:
+  # Session-level placement offset of board_camera from board.yaml camera.position / look_at.
+  position_m: 0.02                   # uniform +- per axis
+  look_at_m: 0.01                    # uniform +- per axis on the look-at point
+  roll_deg: 2.0
+  per_frame_position_m: 0.001        # tiny per-frame vibration
+  # Intrinsics stay the SDF ones (hfov 0.95, 640x480); simulated calibration estimates them.
+
+pieces:
+  position_noise_m: 0.002            # players never center pieces perfectly
+  yaw_noise_deg: 180                 # pieces are rotationally symmetric except the knight
+  knight_yaw_deg: 30
+
+output:
+  root: gambit_vision/data/crops     # data/crops/<session_id>/ relative to gambit_vision/ (contracts.md)
+  crop_config: gambit_vision/configs/camera.yaml   # crop geometry (widen, extend_up, size_wh)
+  image_ext: .png
+  overwrite: false

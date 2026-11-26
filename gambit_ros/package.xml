@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gambit_ros</name>
+  <version>0.1.0</version>
+  <description>Gambit ROS 2 nodes (C++): vision (camera -> board FEN), game (FEN -> robot move), arm (move -> joint trajectory).</description>
+  <maintainer email="brandonzabawa123@gmail.com">BrandonZabawa</maintainer>
+  <license>GPL-3.0-only</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>ros_gz_interfaces</depend>
+  <!-- Optional: gambit_cpp (OnnxClassifier, board assembly) and OpenCV are found with
+       find_package(... QUIET) in CMakeLists.txt; add <depend> lines once they are packaged. -->
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

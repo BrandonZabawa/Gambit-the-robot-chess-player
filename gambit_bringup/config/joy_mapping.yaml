@@ -1,0 +1,44 @@
+# Gamepad teleoperation of the arm (joy_node -> teleop -> arm_controller / gripper_controller).
+# Layout: Xbox-style controller as reported by the ROS 2 `joy` package (sensor_msgs/Joy).
+# Check your pad's indices with: ros2 run joy joy_node  &&  ros2 topic echo /joy
+# Velocities are joint jog speeds (rad/s) at full stick deflection.
+
+joy:
+  device_id: 0
+  deadzone: 0.08
+  autorepeat_rate: 20.0      # Hz, publish rate while a stick is held
+
+deadman_button: 4            # LB must be held for any motion (released -> stop)
+turbo_button: 5              # RB: multiply speeds by turbo_scale
+turbo_scale: 2.0
+
+axes:
+  shoulder_pan:  {axis: 0, scale: -0.6}   # left stick X
+  shoulder_lift: {axis: 1, scale: 0.5}    # left stick Y
+  elbow_flex:    {axis: 4, scale: 0.5}    # right stick Y
+  wrist_flex:    {axis: 3, scale: 0.8}    # right stick X
+  wrist_roll:    {axis: 6, scale: 1.0}    # d-pad X
+
+buttons:
+  gripper_open: 0            # A
+  gripper_close: 1           # B
+  park: 3                    # Y: go to board.yaml arm.park
+  hover_square: 2            # X: move above the square selected on the GUI/topic (later)
+  e_stop: 8                  # Xbox/guide button: latch emergency stop (all controllers hold)
+  e_stop_reset: 7            # Start: release the latch (only when deadman is released)
+
+gripper:
+  open: 1.0                  # matches board.yaml arm.gripper_open / gripper_closed
+  closed: 0.05
+  move_time_s: 0.5
+
+limits:
+  max_joint_speed: 1.0       # rad/s after turbo
+  command_period_s: 0.05     # trajectory point horizon for each jog command
+  respect_safety_yaml: true  # clamp to joint limits in gambit_bringup/config/safety.yaml
+
+topics:
+  joy: /joy
+  arm_action: /arm_controller/follow_joint_trajectory
+  gripper_action: /gripper_controller/follow_joint_trajectory
+  e_stop: /gambit/e_stop     # std_msgs/Bool, latched

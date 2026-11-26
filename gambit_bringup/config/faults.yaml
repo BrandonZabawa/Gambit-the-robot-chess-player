@@ -1,0 +1,39 @@
+# Fault injection in simulation (gambit_sim/notebooks/fault_injector.ipynb, run_fault_tests.ipynb).
+# Each fault perturbs the world after a ply; the perception + game stack should notice
+# (low confidence, illegal board, mismatch with the expected position) and ask the human
+# instead of acting on a wrong board. Units: meters, degrees.
+
+seed: 0
+faults_per_game: 3          # expected number of injected faults per replayed game
+min_plies_between: 4
+
+types:
+  knocked_piece:            # piece nudged off its square center (and maybe tilted), still upright-ish
+    probability: 0.30
+    offset_m: [0.004, 0.012]          # radial offset range from the square center
+    tilt_deg: [0.0, 15.0]
+    expected: "board still read correctly if offset < ~0.4 square; otherwise low confidence"
+  dropped_piece:            # piece lying on its side, on the board or just off it
+    probability: 0.15
+    on_board_probability: 0.6
+    off_board_margin_m: [0.01, 0.05]  # distance outside the playing area when off board
+    expected: "missing piece -> illegal or mismatching board -> ask human"
+  wrong_square:             # the move landed one square off (robot or human mistake)
+    probability: 0.20
+    max_distance_squares: 1           # Chebyshev distance from the intended target
+    allow_occupied: false
+    expected: "detected board differs from the expected FEN -> flag the move"
+  lighting_change:          # sudden lamp change / shadow
+    probability: 0.20
+    intensity_scale: [0.3, 1.8]
+    direction_jitter_deg: 40
+    expected: "classifier confidence drops but labels stay correct; no false move"
+  camera_shift:             # someone bumps the camera
+    probability: 0.15
+    position_m: [0.005, 0.03]
+    rotation_deg: [0.5, 4.0]
+    expected: "ArUco re-detection fixes the homography; if not, refuse to act"
+
+# Pieces never chosen for knocked/dropped faults (losing the king makes the board illegal by design;
+# keep it false to test that path too).
+protect_kings: true
