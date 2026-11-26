@@ -247,6 +247,26 @@ Until the Wiki exists, this README is the source of truth.
 - Baseline classifier, ResNet-18 trained three ways (sim only, real only, mixed) in Colab
 - Board assembly with legality check, end to end. Move detection gate.
 - Evaluation, chesscog comparison, demo video
+## Repository layout (notebook branch)
+
+All Python is in Jupyter notebooks (see [docs/notebooks.md](docs/notebooks.md)); C/C++, CMake,
+YAML, SDF and the ROS launch file are normal files. Start with each package's `00_overview.ipynb`.
+
+| Folder | Deliverables |
+|---|---|
+| `gambit_vision/notebooks/` | CAP5415 M1-M5: calibration, homography + grid, capture/auto-labeling, baseline, ResNet-18, board assembly, evaluation, chesscog comparison, move detection; plus placement verification and camera-vs-engine board sync |
+| `gambit_arm/notebooks/` | Square map, STS servo bus, SO-101 kinematics, safety, pick-and-place, grasp verify-and-retry, repeatability and trial run notebooks, LeRobot teleop/imitation learning |
+| `gambit_game/notebooks/` | Engine at a chosen strength, physical move sequences (captures, castling, en passant, promotion), game state machine, recovery, logging |
+| `gambit_teach/notebooks/` | Habit features, player model with confidence/OOD, teacher move selection with fallback, balanced-outcome metrics, OOD testing, disclosure decision |
+| `gambit_sim/notebooks/` | Gazebo world generation, PGN teleport replay, sim dataset generation, fault injection, rclpy playground |
+| `gambit_cpp/` | C++20 layer: servo bus (termios), kinematics (Eigen), ONNX Runtime classifier, pybind11, GoogleTest |
+| `gambit_ros/` | ROS 2 rclcpp nodes: vision, game, arm |
+| `firmware/stm32/` | Optional bare-metal real-time layer and host protocol |
+| `gambit_bringup/` | Launch file, configs (board, safety, game, faults, joystick), Gazebo models and world |
+
+Check everything: `tools/run_notebooks.sh` (library notebooks) and
+`cmake -S gambit_cpp -B build -G Ninja && cmake --build build && ctest --test-dir build`.
+
 ## License
 
 License to be decided. Before choosing, check the license of every dependency (chess engine, chess libraries, LeRobot, arm designs, vendor servo code) and confirm they are compatible with your plans for the project.
