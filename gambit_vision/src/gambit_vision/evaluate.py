@@ -68,7 +68,7 @@ def confusion_matrix_plot(
     return cm
 
 
-def evaluate_model(cfg: dict, classifier) -> dict:
+def evaluate_model(cfg, classifier) -> dict:
     """Run `classifier` on the held-out test sessions and write results/<run_name>/.
 
     cfg: parsed configs/train.yaml (uses data.crops_root, data.test_sessions,
@@ -79,6 +79,10 @@ def evaluate_model(cfg: dict, classifier) -> dict:
     import pandas as pd
 
     from gambit_vision.board_assembly import assemble
+    from gambit_vision.config import to_dict
+
+    if not isinstance(cfg, dict):  # accept config.load_config()'s namespace too
+        cfg = to_dict(cfg)
     from gambit_vision.dataset import load_manifest
 
     out_dir = Path(cfg["eval"]["results_dir"]) / cfg["eval"]["run_name"]
