@@ -1,0 +1,24 @@
+# Python / notebooks
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Data, models, results (large; keep out of git)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+results/
+*.pt
+*.pth
+*.onnx
+*.pkl
+calibration/*.yaml
+
+# C++ / ROS builds
+build/
+install/
+log/
+gambit_cpp/build/
+firmware/stm32/build/

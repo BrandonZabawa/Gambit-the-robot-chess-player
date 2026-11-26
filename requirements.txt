@@ -1,0 +1,14 @@
+# Everything needed to run the library notebooks on a laptop or in Colab.
+# GPU/hardware extras are installed inside the run_*.ipynb notebooks that need them
+# (torch/torchvision, pyserial, lerobot, onnxruntime, ultralytics).
+numpy
+scipy
+pandas
+matplotlib
+scikit-learn
+pyyaml
+chess                     # python-chess
+opencv-contrib-python     # includes cv2.aruco
+jupyter
+nbclient
+ipykernel
