@@ -1,0 +1,12 @@
+# Filled in by M1 (calibration) and M2 (capture). Placeholder values.
+intrinsics_file: ../calibration/camera_intrinsics.yaml
+markers:
+  dictionary: DICT_4X4_50
+  ids: {a1: 0, h1: 1, h8: 2, a8: 3}     # must match gambit_bringup/config/board.yaml
+warp:
+  square_px: 100                         # top-down image: 8 * square_px plus margin
+  margin_px: 100
+crop:
+  widen: 0.5
+  extend_up: 1.0
+  size_wh: [100, 200]
